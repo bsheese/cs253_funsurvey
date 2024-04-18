@@ -1,12 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-    Fun Survey Dashboard
-    ~~~~~~
 
-"""
-
+import io
+import base64
 import os
-from flask import Flask, request, g, redirect, url_for, render_template, flash
+from flask import Flask, request, g, redirect, url_for, render_template, flash, send_file
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -44,36 +40,41 @@ def inject_vars():
     return {'label_dict': label_dict}
 
 
-
-def render_count(col_label, horizontal=False):
-    question = col_label
-    qtext = label_dict[question]
-    series = df[question]
+def descriptives_html(col_label):
+    series = df[col_label]
 
     # Generate descriptive statistics HTML
     descrip_stats = series.describe()
     descrip_df = pd.DataFrame(descrip_stats).transpose()
     descrip_html = descrip_df.to_html()
+    return descrip_html
 
+def valuecount_html(col_label):
+    series = df[col_label]
     value_counts = series.value_counts(ascending=False)
     value_counts_df = pd.DataFrame(value_counts).head(10)
     value_counts_html = value_counts_df.to_html()
+    return value_counts_html
 
-    # Generate the histogram
-    # plt.figure(figsize=(8, 4))  # Optional, adjust size as needed
+
+
+def generate_countplot(col_label, horizontal=False):
+    series = df[col_label]
+
     if horizontal:
         barchart = sns.countplot(y=series)
     else:
         barchart = sns.countplot(x=series)
-    image_path = f'static/images/{question}_plot.png'
-    plt.savefig(image_path)
+
+    # Save the plot to a BytesIO object in memory
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
     plt.close()
+    img.seek(0)  # Rewind the file
 
-    # Pass the path of the image to the template
-    return render_template('numeric.html', title=question, qtext= qtext, descrip=descrip_html,
-                           value_counts = value_counts_html,
-                           chart_url=url_for('static', filename=f'images/{question}_plot.png'))
-
+    # Encode the image to base64 string
+    img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
+    return img_base64
 
 
 @app.route('/')
@@ -85,9 +86,26 @@ def home():
                            last =df.Timestamp.max(),
                            responses=df.shape[0])
 
+@app.route('/spell')
+def spell():
+    col_label = 'spell'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(col_label),
+                           value_counts=valuecount_html(col_label),
+                           chart='data:image/png;base64,' + generate_countplot(col_label))
+
 @app.route('/musicartist')
 def musicartist():
-    return render_count('musicartist', horizontal=True)
+    col_label = 'musicartist'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(col_label),
+                           value_counts=valuecount_html(col_label),
+                           chart='data:image/png;base64,' + generate_countplot(col_label))
+
 @app.route('/height')
 def height():
     return render_count('height', horizontal=True)
@@ -112,9 +130,6 @@ def deepdish():
 @app.route('/sport')
 def sport():
     return render_count('sport', horizontal=True)
-@app.route('/spell')
-def spell():
-    return render_count('spell', horizontal=True)
 @app.route('/hangout')
 def hangout():
     return render_count('hangout', horizontal=True)
