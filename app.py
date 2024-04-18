@@ -1,46 +1,30 @@
-
 import io
 import base64
-import os
-from flask import Flask, request, g, redirect, url_for, render_template, flash, send_file
+from flask import Flask, render_template
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from dfprep import prepare_dataframe
+
+# get and prep the dataframe, gets data from url, requires Python SSL certificates setup correctly
+url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkK73xD192AdP0jZe6ac9cnVPSeqqbYZmSPnhY2hnY8ANROAOCStRFdvjwFoapv3j2rzMtZ91KXPFm/pub?output=csv"
+df, label_dict = prepare_dataframe(url)
+
 
 app = Flask(__name__)
 
 
-
-# survey data url
-url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkK73xD192AdP0jZe6ac9cnVPSeqqbYZmSPnhY2hnY8ANROAOCStRFdvjwFoapv3j2rzMtZ91KXPFm/pub?output=csv"
-
-renamelist = ['Timestamp', 'musicartist', 'height', 'city', 'thirtymin', 'travel', \
-              'likepizza', 'deepdish', 'sport', 'spell', 'hangout', 'talk', \
-              'year', 'quote', 'areacode', 'pets', 'superpower', 'shoes']
-
-# create data frame from url
-df = pd.read_csv(url)
-
-# assign original headers to list
-survey_questions = df.columns.to_list()
-
-# replace with column names easier to work with
-df.columns = renamelist
-
-# drop duplicates
-df = df.drop_duplicates(subset=df.columns[1:])
-df.Timestamp = pd.to_datetime(df.Timestamp)
-
-label_dict = {}
-for i in range(len(renamelist)):
-    label_dict[renamelist[i]] = survey_questions[i]
-
 @app.context_processor
 def inject_vars():
+    """
+    Makes the label_dict dictionary globally available to all templates.  By using this context processor,
+    any template rendered by the application can use label_dict directly without
+    needing to have it passed from the view function.
+    """
     return {'label_dict': label_dict}
 
 
-def descriptives_html(col_label):
+def descriptives_html(df, col_label):
     series = df[col_label]
 
     # Generate descriptive statistics HTML
@@ -49,7 +33,8 @@ def descriptives_html(col_label):
     descrip_html = descrip_df.to_html()
     return descrip_html
 
-def valuecount_html(col_label):
+
+def valuecount_html(df, col_label):
     series = df[col_label]
     value_counts = series.value_counts(ascending=False)
     value_counts_df = pd.DataFrame(value_counts).head(10)
@@ -57,10 +42,8 @@ def valuecount_html(col_label):
     return value_counts_html
 
 
-
-def generate_countplot(col_label, horizontal=False):
+def generate_countplot(df, col_label, horizontal=False):
     series = df[col_label]
-
     if horizontal:
         barchart = sns.countplot(y=series)
     else:
@@ -83,18 +66,24 @@ def home():
     return render_template('index.html',
                            label_dict=label_dict,
                            first=df.Timestamp.min(),
-                           last =df.Timestamp.max(),
+                           last=df.Timestamp.max(),
                            responses=df.shape[0])
+
 
 @app.route('/spell')
 def spell():
     col_label = 'spell'
-    return render_template('numeric.html',
-                           title=col_label,
-                           qtext=label_dict[col_label],
-                           descrip=descriptives_html(col_label),
-                           value_counts=valuecount_html(col_label),
-                           chart='data:image/png;base64,' + generate_countplot(col_label))
+    try:
+        return render_template('numeric.html',
+                               title=col_label,
+                               qtext=label_dict[col_label],
+                               descrip=descriptives_html(df, col_label),
+                               value_counts=valuecount_html(df, col_label),
+                               chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
+    except Exception as e:
+        return f"An error occurred: {str(e)}"
+
 
 @app.route('/musicartist')
 def musicartist():
@@ -102,58 +91,171 @@ def musicartist():
     return render_template('numeric.html',
                            title=col_label,
                            qtext=label_dict[col_label],
-                           descrip=descriptives_html(col_label),
-                           value_counts=valuecount_html(col_label),
-                           chart='data:image/png;base64,' + generate_countplot(col_label))
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
 
 @app.route('/height')
 def height():
-    return render_count('height', horizontal=True)
+    col_label = 'height'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
+
 @app.route('/city')
 def city():
-    return render_count('city', horizontal=True)
+    col_label = 'city'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
+
 @app.route('/thirtymin')
 def thirtymin():
-    return render_count('thirtymin', horizontal=True)
+    col_label = 'thirtymin'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
+
 @app.route('/travel')
 def travel():
-    return render_count('travel', horizontal=True)
+    col_label = 'travel'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
 
 @app.route('/likepizza')
 def likepizza():
-    return render_count('likepizza', horizontal=False)
+    col_label = 'likepizza'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
 
 @app.route('/deepdish')
 def deepdish():
-    return render_count('deepdish', horizontal=True)
+    col_label = 'deepdish'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
 
 @app.route('/sport')
 def sport():
-    return render_count('sport', horizontal=True)
+    col_label = 'sport'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
+
 @app.route('/hangout')
 def hangout():
-    return render_count('hangout', horizontal=True)
+    col_label = 'hangout'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
 
 @app.route('/talk')
 def talk():
-    return render_count('talk', horizontal=True)
+    col_label = 'talk'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
+
 @app.route('/year')
 def year():
-    return render_count('year', horizontal=True)
+    col_label = 'year'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
 
 @app.route('/quote')
 def quote():
-    return render_count('quote', horizontal=True)
+    col_label = 'quote'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
+
 @app.route('/areacode')
 def areacode():
-    return render_count('areacode', horizontal=True)
+    col_label = 'areacode'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
+
 @app.route('/pets')
 def pets():
-    return render_count('pets', horizontal=True)
+    col_label = 'pets'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
+
 @app.route('/superpower')
 def superpower():
-    return render_count('superpower', horizontal=True)
+    col_label = 'superpower'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+
+
 @app.route('/shoes')
 def shoes():
-    return render_count('shoes', horizontal=True)
-
+    col_label = 'shoes'
+    return render_template('numeric.html',
+                           title=col_label,
+                           qtext=label_dict[col_label],
+                           descrip=descriptives_html(df, col_label),
+                           value_counts=valuecount_html(df, col_label),
+                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
