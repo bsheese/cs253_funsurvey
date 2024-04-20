@@ -4,11 +4,20 @@ from flask import Flask, render_template
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from dfprep import prepare_dataframe
+from dfprep import prepare_dataframe, get_data, renamelist
 
-# get and prep the dataframe, gets data from url, requires Python SSL certificates setup correctly
-url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkK73xD192AdP0jZe6ac9cnVPSeqqbYZmSPnhY2hnY8ANROAOCStRFdvjwFoapv3j2rzMtZ91KXPFm/pub?output=csv"
-df, label_dict = prepare_dataframe(url)
+local_data = True
+
+if local_data == False:
+    # get and prep the dataframe, gets data from url, requires Python SSL certificates setup correctly
+    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkK73xD192AdP0jZe6ac9cnVPSeqqbYZmSPnhY2hnY8ANROAOCStRFdvjwFoapv3j2rzMtZ91KXPFm/pub?output=csv"
+    df = get_data(url)
+else:
+    # gets old data from local directory
+    df = get_data()
+
+df, label_dict = prepare_dataframe(df, renamelist)
+
 
 
 app = Flask(__name__)
