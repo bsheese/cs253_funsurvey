@@ -69,6 +69,49 @@ def generate_countplot(df, col_label, horizontal=False):
     return img_base64
 
 
+# def text_html(df, col_label):
+#     series = df[col_label]
+#     series = series.str.strip().str.lower()
+#     top_25 = series.value_counts().nlargest(25)
+#     barchart = sns.countplot(y=top_25)
+#
+#     plt.figure(figsize=(10, 8))
+#     plt.xlabel('Count')
+#     plt.ylabel(col_label.capitalize())
+#     plt.title(f'Top 25 Most Common Values in {col_label.capitalize()}')
+#
+#     # Save the plot to a BytesIO object in memory
+#     img = io.BytesIO()
+#     plt.savefig(img, format='png')
+#     plt.close()
+#     img.seek(0)  # Rewind the file
+#
+#     # Encode the image to base64 string
+#     img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
+#     return img_base64
+
+def textcount_html(df, col_label):
+    # Process the series
+    series = df[col_label].str.strip().str.lower().str.title()
+    top_25 = series.value_counts().nlargest(25).sort_values(ascending=True)
+
+    # Create the plot
+    plt.figure(figsize=(10, 8))
+    top_25.plot(kind='barh')
+    plt.xlabel('Count')
+    plt.ylabel(col_label.capitalize())
+    plt.title(f'Top 25 Most Common Values in {col_label.capitalize()}')
+
+    # Save the plot to a BytesIO object in memory
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    plt.close()
+    img.seek(0)  # Rewind the file
+
+    # Encode the image to base64 string
+    img_base64 = base64.b64encode(img.getvalue()).decode('utf-8')
+    return img_base64
+
 @app.route('/')
 def home():
     df_descriptives = df.describe().to_html()
@@ -97,56 +140,46 @@ def spell():
 @app.route('/musicartist')
 def musicartist():
     col_label = 'musicartist'
-    return render_template('numeric.html',
+    return render_template('textentry.html',
                            title=col_label,
                            qtext=label_dict[col_label],
-                           descrip=descriptives_html(df, col_label),
-                           value_counts=valuecount_html(df, col_label),
-                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+                           chart='data:image/png;base64,' + textcount_html(df, col_label))
 
 
 @app.route('/height')
 def height():
     col_label = 'height'
-    return render_template('numeric.html',
+    return render_template('textentry.html',
                            title=col_label,
                            qtext=label_dict[col_label],
-                           descrip=descriptives_html(df, col_label),
-                           value_counts=valuecount_html(df, col_label),
-                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+                           chart='data:image/png;base64,' + textcount_html(df, col_label))
 
 
 @app.route('/city')
 def city():
     col_label = 'city'
-    return render_template('numeric.html',
+    return render_template('textentry.html',
                            title=col_label,
                            qtext=label_dict[col_label],
-                           descrip=descriptives_html(df, col_label),
-                           value_counts=valuecount_html(df, col_label),
-                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+                           chart='data:image/png;base64,' + textcount_html(df, col_label))
 
 
 @app.route('/thirtymin')
 def thirtymin():
     col_label = 'thirtymin'
-    return render_template('numeric.html',
+    return render_template('textentry.html',
                            title=col_label,
                            qtext=label_dict[col_label],
-                           descrip=descriptives_html(df, col_label),
-                           value_counts=valuecount_html(df, col_label),
-                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+                           chart='data:image/png;base64,' + textcount_html(df, col_label))
 
 
 @app.route('/travel')
 def travel():
     col_label = 'travel'
-    return render_template('numeric.html',
+    return render_template('textentry.html',
                            title=col_label,
                            qtext=label_dict[col_label],
-                           descrip=descriptives_html(df, col_label),
-                           value_counts=valuecount_html(df, col_label),
-                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+                           chart='data:image/png;base64,' + textcount_html(df, col_label))
 
 
 @app.route('/likepizza')
@@ -174,23 +207,19 @@ def deepdish():
 @app.route('/sport')
 def sport():
     col_label = 'sport'
-    return render_template('numeric.html',
+    return render_template('textentry.html',
                            title=col_label,
                            qtext=label_dict[col_label],
-                           descrip=descriptives_html(df, col_label),
-                           value_counts=valuecount_html(df, col_label),
-                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+                           chart='data:image/png;base64,' + textcount_html(df, col_label))
 
 
 @app.route('/hangout')
 def hangout():
     col_label = 'hangout'
-    return render_template('numeric.html',
+    return render_template('textentry.html',
                            title=col_label,
                            qtext=label_dict[col_label],
-                           descrip=descriptives_html(df, col_label),
-                           value_counts=valuecount_html(df, col_label),
-                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+                           chart='data:image/png;base64,' + textcount_html(df, col_label))
 
 
 @app.route('/talk')
@@ -207,23 +236,19 @@ def talk():
 @app.route('/year')
 def year():
     col_label = 'year'
-    return render_template('numeric.html',
+    return render_template('textentry.html',
                            title=col_label,
                            qtext=label_dict[col_label],
-                           descrip=descriptives_html(df, col_label),
-                           value_counts=valuecount_html(df, col_label),
-                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+                           chart='data:image/png;base64,' + textcount_html(df, col_label))
 
 
 @app.route('/quote')
 def quote():
     col_label = 'quote'
-    return render_template('numeric.html',
+    return render_template('textentry.html',
                            title=col_label,
                            qtext=label_dict[col_label],
-                           descrip=descriptives_html(df, col_label),
-                           value_counts=valuecount_html(df, col_label),
-                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+                           chart='data:image/png;base64,' + textcount_html(df, col_label))
 
 
 @app.route('/areacode')
@@ -240,31 +265,25 @@ def areacode():
 @app.route('/pets')
 def pets():
     col_label = 'pets'
-    return render_template('numeric.html',
+    return render_template('textentry.html',
                            title=col_label,
                            qtext=label_dict[col_label],
-                           descrip=descriptives_html(df, col_label),
-                           value_counts=valuecount_html(df, col_label),
-                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+                           chart='data:image/png;base64,' + textcount_html(df, col_label))
 
 
 @app.route('/superpower')
 def superpower():
     col_label = 'superpower'
-    return render_template('numeric.html',
+    return render_template('textentry.html',
                            title=col_label,
                            qtext=label_dict[col_label],
-                           descrip=descriptives_html(df, col_label),
-                           value_counts=valuecount_html(df, col_label),
-                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+                           chart='data:image/png;base64,' + textcount_html(df, col_label))
 
 
 @app.route('/shoes')
 def shoes():
     col_label = 'shoes'
-    return render_template('numeric.html',
+    return render_template('textentry.html',
                            title=col_label,
                            qtext=label_dict[col_label],
-                           descrip=descriptives_html(df, col_label),
-                           value_counts=valuecount_html(df, col_label),
-                           chart='data:image/png;base64,' + generate_countplot(df, col_label))
+                           chart='data:image/png;base64,' + textcount_html(df, col_label))
